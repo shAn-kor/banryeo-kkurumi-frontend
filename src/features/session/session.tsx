@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 import { ApiError, apiClient } from '../../api/client';
 
 export type Member = Readonly<{
@@ -43,13 +43,15 @@ function isMember(value: unknown): value is Member {
 
 export function SessionProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<SessionState>({ status: 'checking', member: undefined });
+  const generation = useRef(0);
 
-  const refresh = useCallback(async () => {
+  const loadMember = useCallback(async (requestGeneration: number) => {
     try {
       const response = await apiClient.request<unknown>('/api/v1/members/me');
       if (!isMember(response)) throw new ApiError('server', 500);
-      setState({ status: 'authenticated', member: response });
+      if (requestGeneration === generation.current) setState({ status: 'authenticated', member: response });
     } catch (error) {
+      if (requestGeneration !== generation.current) return;
       if (error instanceof ApiError && error.kind === 'unauthorized') {
         setState({ status: 'anonymous', member: undefined });
         return;
@@ -58,23 +60,31 @@ export function SessionProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const refresh = useCallback(async () => {
+    const requestGeneration = ++generation.current;
+    await loadMember(requestGeneration);
+  }, [loadMember]);
+
   useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => () => { generation.current += 1; }, []);
 
   const value = useMemo<Session>(() => ({
     ...state,
     async login(input) {
+      const requestGeneration = ++generation.current;
       await apiClient.request('/api/v1/auth/login', { body: input, method: 'POST' });
-      await refresh();
+      if (requestGeneration === generation.current) await loadMember(requestGeneration);
     },
     async logout() {
+      const requestGeneration = ++generation.current;
       await apiClient.request('/api/v1/auth/logout', { method: 'POST' });
-      setState({ status: 'anonymous', member: undefined });
+      if (requestGeneration === generation.current) setState({ status: 'anonymous', member: undefined });
     },
     refresh,
     async register(input) {
       await apiClient.request('/api/v1/members', { body: input, method: 'POST' });
     },
-  }), [refresh, state]);
+  }), [loadMember, refresh, state]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

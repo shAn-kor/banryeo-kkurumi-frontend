@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ApiError } from '../api/client';
 import { Card, Container, Notice, Page, Section } from '../shared/design';
 import { getOrder } from '../features/orders/api';
 import { formatAmount, formatOrderDate } from '../features/orders/presentation';
 import type { PublicOrder } from '../features/orders/types';
 import { getPayment, type PublicPayment } from '../features/payment/api';
 import { PaymentStatusPanel } from '../features/payment/PaymentStatusPanel';
+import { loginPathFor } from '../features/session';
 import './order-detail.css';
 
 export default function OrderDetailPage() {
   const { orderId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [order, setOrder] = useState<PublicOrder>();
   const [orderError, setOrderError] = useState<string>();
   const [isOrderLoading, setIsOrderLoading] = useState(true);
@@ -32,14 +36,28 @@ export default function OrderDetailPage() {
     setIsPaymentLoading(true);
     void getOrder(orderId)
       .then((result) => { if (active) setOrder(result); })
-      .catch(() => { if (active) setOrderError('주문 상세를 불러오지 못했습니다. 주문 소유권과 로그인 상태를 확인해 주세요.'); })
+      .catch((caught: unknown) => {
+        if (!active) return;
+        if (caught instanceof ApiError && caught.kind === 'unauthorized') {
+          navigate(loginPathFor(`${location.pathname}${location.search}`), { replace: true });
+          return;
+        }
+        setOrderError('주문 상세를 불러오지 못했습니다. 주문 소유권과 로그인 상태를 확인해 주세요.');
+      })
       .finally(() => { if (active) setIsOrderLoading(false); });
     void getPayment(orderId)
       .then((result) => { if (active) setPayment(result); })
-      .catch(() => { if (active) setPaymentError('데모 결제 상태를 지금 확인하지 못했습니다. 주문 상태와 별도로 나중에 주문 내역에서 다시 확인해 주세요.'); })
+      .catch((caught: unknown) => {
+        if (!active) return;
+        if (caught instanceof ApiError && caught.kind === 'unauthorized') {
+          navigate(loginPathFor(`${location.pathname}${location.search}`), { replace: true });
+          return;
+        }
+        setPaymentError('데모 결제 상태를 지금 확인하지 못했습니다. 주문 상태와 별도로 나중에 주문 내역에서 다시 확인해 주세요.');
+      })
       .finally(() => { if (active) setIsPaymentLoading(false); });
     return () => { active = false; };
-  }, [orderId]);
+  }, [location.pathname, location.search, navigate, orderId]);
 
   return (
     <Page>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { type ProductList } from '../features/catalog';
@@ -16,11 +16,21 @@ export default function LikesPage() {
   const [likes, setLikes] = useState<ProductList>();
   const [error, setError] = useState<string>();
   const [removingId, setRemovingId] = useState<string>();
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   const refresh = useCallback(async () => {
-    setLikes(undefined); setError(undefined);
-    try { setLikes(await getMyLikes()); }
+    if (mounted.current) { setLikes(undefined); setError(undefined); }
+    try {
+      const response = await getMyLikes();
+      if (mounted.current) setLikes(response);
+    }
     catch (caught) {
+      if (!mounted.current) return;
       if (caught instanceof ApiError && caught.kind === 'unauthorized') { navigate(loginPathFor(`${location.pathname}${location.search}`), { replace: true }); return; }
       setError('좋아요 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
@@ -32,9 +42,10 @@ export default function LikesPage() {
     setRemovingId(productId); setError(undefined);
     try { await removeLike(productId); await refresh(); }
     catch (caught) {
+      if (!mounted.current) return;
       if (caught instanceof ApiError && caught.kind === 'unauthorized') { navigate(loginPathFor(`${location.pathname}${location.search}`)); return; }
       setError('좋아요를 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.');
-    } finally { setRemovingId(undefined); }
+    } finally { if (mounted.current) setRemovingId(undefined); }
   }
 
   return <Page><Container><Section className="storefront-page" labelledBy="likes-title"><p className="page-kicker">MY LIST</p><h1 className="storefront-page__heading" id="likes-title">좋아요</h1><p className="storefront-page__intro">마음에 든 상품을 다시 확인해 보세요.</p>

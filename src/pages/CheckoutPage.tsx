@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ApiError } from '../api/client';
 import { Button, Card, Container, Notice, Page, Section } from '../shared/design';
 import { createOrder } from '../features/orders/api';
 import { clearCheckoutDraft, readCheckoutDraft, toOrderItems, writeCheckoutDraft, type CheckoutDraftItem } from '../features/orders/draft';
 import { formatAmount } from '../features/orders/presentation';
+import { loginPathFor } from '../features/session';
 import './checkout.css';
 
 function totalAmount(items: CheckoutDraftItem[]): number {
@@ -11,6 +13,7 @@ function totalAmount(items: CheckoutDraftItem[]): number {
 }
 
 export default function CheckoutPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [items, setItems] = useState<CheckoutDraftItem[]>(readCheckoutDraft);
   const [error, setError] = useState<string>();
@@ -41,7 +44,11 @@ export default function CheckoutPage() {
       clearCheckoutDraft();
       setItems([]);
       navigate(`/orders/${order.id}`);
-    } catch {
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.kind === 'unauthorized') {
+        navigate(loginPathFor(`${location.pathname}${location.search}`));
+        return;
+      }
       setError('주문을 만들지 못했습니다. 로그인 상태와 상품 재고를 확인한 뒤 다시 시도해 주세요.');
     } finally {
       setIsSubmitting(false);

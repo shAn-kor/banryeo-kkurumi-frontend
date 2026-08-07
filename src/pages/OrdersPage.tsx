@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ApiError } from '../api/client';
 import { Button, Card, Container, Page, Section } from '../shared/design';
 import { listOrders } from '../features/orders/api';
 import { defaultDateRange, formatAmount, formatCompactDate, formatOrderDate } from '../features/orders/presentation';
 import type { OrderList } from '../features/orders/types';
+import { loginPathFor } from '../features/session';
 import './orders.css';
 
 const PAGE_SIZE = 10;
 const initialRange = defaultDateRange();
 
 export default function OrdersPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [startDate, setStartDate] = useState(initialRange.startDate);
   const [endDate, setEndDate] = useState(initialRange.endDate);
   const [orders, setOrders] = useState<OrderList>();
@@ -28,12 +32,16 @@ export default function OrdersPage() {
     try {
       const result = await listOrders({ startAt: formatCompactDate(startDate), endAt: formatCompactDate(endDate), page, size: PAGE_SIZE });
       setOrders(result);
-    } catch {
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.kind === 'unauthorized') {
+        navigate(loginPathFor(`${location.pathname}${location.search}`), { replace: true });
+        return;
+      }
       setError('주문 내역을 불러오지 못했습니다. 로그인 상태를 확인해 주세요.');
     } finally {
       setIsLoading(false);
     }
-  }, [endDate, startDate]);
+  }, [endDate, location.pathname, location.search, navigate, startDate]);
 
   useEffect(() => {
     void load(0);
