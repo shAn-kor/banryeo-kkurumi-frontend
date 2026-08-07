@@ -104,12 +104,12 @@ run_all() {
 
   command -v openssl >/dev/null || fail "openssl is required to create the local E2E TLS certificate"
   tls_dir="$(mktemp -d)"
+  trap "cleanup_run '${run_id}' '${tls_dir}'" EXIT INT TERM
   openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
     -keyout "${tls_dir}/key.pem" \
     -out "${tls_dir}/cert.pem" \
     -subj '/CN=127.0.0.1' \
     -addext 'subjectAltName = IP:127.0.0.1,DNS:localhost' >/dev/null 2>&1
-  trap "cleanup_run '${run_id}' '${tls_dir}'" EXIT INT TERM
   "${Q3_RUNTIME}" down "${run_id}"
   "${Q3_RUNTIME}" up "${run_id}" "${api_port}"
   wait_for_api "${api_port}"
