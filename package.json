@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "e2e:list": "playwright test --list",
+    "e2e:serve": "vite --config e2e/vite.config.ts",
+    "e2e:runtime:check": "bash e2e/runtime.test.sh",
+    "e2e:live": "bash scripts/e2e-public-runtime.sh run \"${E2E_RUN_ID:-e2e-local}\" \"${E2E_API_PORT:-18080}\" \"${E2E_STOREFRONT_PORT:-4173}\""
   },
   "dependencies": {
     "@vitejs/plugin-react": "6.0.5",
@@ -16,6 +21,7 @@
     "vite": "8.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.0.1",
     "@types/react": "18.3.12",
