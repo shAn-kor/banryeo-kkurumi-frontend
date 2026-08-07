@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getProducts, priceText } from './catalog-api';
+import { getProducts, priceText, type ProductList } from './catalog-api';
+import { catalogResultSummary } from '../../pages/CatalogPage';
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify({ data: body }), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -21,5 +22,15 @@ describe('catalog-api', () => {
 
   it('priceText_krwPrice_formatsWithoutFraction', () => {
     expect(priceText(12000)).toContain('12,000');
+  });
+
+  it('catalogResultSummary_actualCursorResponseWithoutGlobalPagination_isHonestAboutVisibleItems', () => {
+    const cursorResponse: ProductList = {
+      hasNext: true,
+      items: [{ brandId: 'brand-1', categoryId: 'category-1', id: 'product-1', likeCount: 0, name: '간식', price: 12000, stock: 3 }],
+      size: 12,
+    };
+
+    expect(catalogResultSummary(cursorResponse)).toBe('현재 1개 상품을 표시 중입니다.');
   });
 });

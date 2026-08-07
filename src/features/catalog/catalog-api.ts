@@ -18,10 +18,10 @@ export type Product = Readonly<{
 
 export type ProductList = Readonly<{
   items: Product[];
-  page: number;
+  page?: number | null;
   size: number;
-  totalElements: number;
-  totalPages: number;
+  totalElements?: number | null;
+  totalPages?: number | null;
   hasNext?: boolean;
   nextCursor?: string | null;
 }>;

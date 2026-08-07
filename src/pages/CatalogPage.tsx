@@ -29,6 +29,13 @@ function catalogQuery(search: URLSearchParams): CatalogQuery {
   };
 }
 
+export function catalogResultSummary(products: ProductList): string {
+  if (typeof products.totalElements === 'number' && Number.isFinite(products.totalElements)) {
+    return `총 ${products.totalElements.toLocaleString('ko-KR')}개 상품`;
+  }
+  return `현재 ${products.items.length.toLocaleString('ko-KR')}개 상품을 표시 중입니다.`;
+}
+
 export function ProductCard({ product }: Readonly<{ product: Product }>) {
   return (
     <Card className="product-card">
@@ -92,6 +99,6 @@ export default function CatalogPage() {
     <CatalogFilters brands={references.brands} categories={references.categories} search={search} setSearch={setSearch} />
     {!products && !error && <LoadingState />}{error && <ErrorState>상품을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</ErrorState>}
     {products && products.items.length === 0 && <EmptyState>조건에 맞는 상품이 없습니다. 필터를 조정해 주세요.</EmptyState>}
-    {products && products.items.length > 0 && <><p aria-live="polite" className="product-card__meta">총 {products.totalElements.toLocaleString('ko-KR')}개 상품</p><div className="storefront-grid">{products.items.map((product) => <ProductCard key={product.id} product={product} />)}</div>{products.hasNext && products.nextCursor && <div className="catalog-pagination"><Button onClick={nextPage}>다음 상품 보기</Button></div>}</>}
+    {products && products.items.length > 0 && <><p aria-live="polite" className="product-card__meta">{catalogResultSummary(products)}</p><div className="storefront-grid">{products.items.map((product) => <ProductCard key={product.id} product={product} />)}</div>{products.hasNext && products.nextCursor && <div className="catalog-pagination"><Button onClick={nextPage}>다음 상품 보기</Button></div>}</>}
   </Section></Container></Page>;
 }
