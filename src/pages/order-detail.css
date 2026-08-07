@@ -1,0 +1,19 @@
+.order-detail { max-width: 68rem; }
+.order-detail h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.25rem); letter-spacing: -0.05em; }
+.order-detail > .ds-notice { margin-top: var(--space-5); }
+.order-detail__layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(17rem, 0.8fr); gap: var(--space-6); margin-top: var(--space-6); align-items: start; }
+.order-detail__layout h2 { margin-top: 0; font-size: 1.25rem; }
+.order-detail__card { display: grid; gap: var(--space-5); }
+.order-detail__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: 0; }
+.order-detail__facts div { display: grid; gap: var(--space-1); }
+.order-detail__facts dt { color: var(--color-muted); font-size: 0.875rem; }
+.order-detail__facts dd { margin: 0; font-weight: 750; overflow-wrap: anywhere; }
+.order-detail__card h3 { margin: 0; font-size: 1rem; }
+.order-detail__items { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.order-detail__items li { display: grid; gap: var(--space-1); padding-top: var(--space-3); border-top: 1px solid var(--color-line); }
+.order-detail__items span { color: var(--color-muted); font-size: 0.9375rem; }
+
+@media (max-width: 43rem) {
+  .order-detail__layout { grid-template-columns: 1fr; }
+  .order-detail__facts { grid-template-columns: 1fr; }
+}
