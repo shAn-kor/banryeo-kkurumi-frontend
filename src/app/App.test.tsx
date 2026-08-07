@@ -26,7 +26,7 @@ function mockApi(session: 'anonymous' | 'authenticated' = 'anonymous') {
     if (input.pathname === '/api/v1/brands' || input.pathname === '/api/v1/categories') return response(200, { items: [] });
     if (input.pathname === '/api/v1/orders') return response(200, { items: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
     if (input.pathname === '/api/v1/orders/order-1') return response(200, { id: 'order-1', items: [], orderDate: '2026-08-07T00:00:00Z', orderNumber: 'O-1', status: 'COMPLETED', totalAmount: 1000 });
-    if (input.pathname === '/api/v1/payments') return response(200, { orderId: 'order-1', status: 'COMPLETED', updatedAt: '2026-08-07T00:00:00Z' });
+    if (input.pathname === '/api/v1/payments') return response(200, { orderId: 'order-1', status: 'SUCCEEDED', updatedAt: '2026-08-07T00:00:00Z' });
     if (input.pathname === '/api/v1/products/product-1') return response(200, { brandId: 'brand-1', categoryId: 'category-1', id: 'product-1', likeCount: 0, name: '테스트 상품', price: 1000, stock: 3 });
     return response(404);
   });
