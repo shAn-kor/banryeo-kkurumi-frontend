@@ -37,7 +37,10 @@ export default function LikesPage() {
     } finally { setRemovingId(undefined); }
   }
 
-  if (session.status === 'checking') return <Page><Container><Section className="storefront-page"><LoadingState /></Section></Container></Page>;
-  if (session.status === 'anonymous') return <Page><Container><Section className="storefront-page"><ErrorState>좋아요를 보려면 로그인해 주세요. <Link className="inline-link" to={loginPathFor('/likes')}>로그인</Link></ErrorState></Section></Container></Page>;
-  return <Page><Container><Section className="storefront-page" labelledBy="likes-title"><p className="page-kicker">MY LIST</p><h1 className="storefront-page__heading" id="likes-title">좋아요</h1><p className="storefront-page__intro">마음에 든 상품을 다시 확인해 보세요.</p>{!likes && !error && <LoadingState />}{error && <ErrorState>{error}</ErrorState>}{likes && likes.items.length === 0 && <EmptyState>아직 좋아요한 상품이 없습니다. <Link className="inline-link" to="/products">상품 둘러보기</Link></EmptyState>}{likes && likes.items.length > 0 && <div className="storefront-grid">{likes.items.map((product) => <div key={product.id}><ProductCard product={product} /><Button disabled={removingId === product.id} onClick={() => { void unlike(product.id); }} tone="secondary">{removingId === product.id ? '처리 중' : '좋아요 취소'}</Button></div>)}</div>}</Section></Container></Page>;
+  return <Page><Container><Section className="storefront-page" labelledBy="likes-title"><p className="page-kicker">MY LIST</p><h1 className="storefront-page__heading" id="likes-title">좋아요</h1><p className="storefront-page__intro">마음에 든 상품을 다시 확인해 보세요.</p>
+    {session.status === 'checking' && <LoadingState />}
+    {session.status === 'anonymous' && <ErrorState>좋아요를 보려면 로그인해 주세요. <Link className="inline-link" to={loginPathFor('/likes')}>로그인</Link></ErrorState>}
+    {session.status === 'error' && <ErrorState>로그인 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.</ErrorState>}
+    {session.status === 'authenticated' && <>{!likes && !error && <LoadingState />}{error && <ErrorState>{error}</ErrorState>}{likes && likes.items.length === 0 && <EmptyState>아직 좋아요한 상품이 없습니다. <Link className="inline-link" to="/products">상품 둘러보기</Link></EmptyState>}{likes && likes.items.length > 0 && <div className="storefront-grid">{likes.items.map((product) => <div key={product.id}><ProductCard product={product} /><Button disabled={removingId === product.id} onClick={() => { void unlike(product.id); }} tone="secondary">{removingId === product.id ? '처리 중' : '좋아요 취소'}</Button></div>)}</div>}</>}
+  </Section></Container></Page>;
 }
