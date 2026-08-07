@@ -29,7 +29,7 @@ render() {
 assert_contains() {
   local file="$1"
   local expected="$2"
-  grep -Fq "${expected}" "${file}" || fail "missing '${expected}' in ${file}"
+  grep -Fq -- "${expected}" "${file}" || fail "missing '${expected}' in ${file}"
 }
 
 assert_arguments() {
@@ -64,6 +64,11 @@ main() {
 
   render "${first}" 18081
   render "${second}" 18082
+
+  assert_contains "${first_render}" 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql'
+  assert_contains "${first_render}" "--protocol=TCP"
+  assert_contains "${first_render}" "--host=127.0.0.1"
+  assert_contains "${first_render}" "SELECT 1 FROM members LIMIT 1"
 
   for resource in "${PROJECT_PREFIX:-banryeo-q3-}${first}_public-mysql-data" "${PROJECT_PREFIX:-banryeo-q3-}${first}_public-redis-data" "${PROJECT_PREFIX:-banryeo-q3-}${first}_default"; do
     assert_contains "${first_render}" "${resource}"
