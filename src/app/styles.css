@@ -3,20 +3,22 @@
 .page-kicker {
   margin: 0 0 var(--space-3);
   color: var(--color-brand);
-  font-size: 0.75rem;
+  font-size: var(--type-kicker-size);
   font-weight: 850;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--type-kicker-tracking);
+  line-height: var(--line-height-tight);
 }
 
-.home-hero { max-width: 47rem; padding-block: clamp(var(--space-8), 11vw, 8rem) var(--space-8); }
-.home-hero h1, .route-placeholder h1 { margin: 0; letter-spacing: -0.06em; line-height: 1.13; }
+.home-hero { max-width: 47rem; padding-block: clamp(var(--space-8), 11vw, 8rem) var(--layout-page-block); }
+.home-hero h1, .route-placeholder h1 { margin: 0; letter-spacing: var(--type-page-heading-tracking); line-height: var(--line-height-heading); }
 .home-hero h1 { font-size: clamp(2.5rem, 7vw, 5.25rem); }
-.home-hero__description { max-width: 42rem; margin: var(--space-5) 0 0; color: var(--color-muted); font-size: clamp(1rem, 2vw, 1.1875rem); line-height: 1.75; }
+.home-hero__description { max-width: 42rem; margin: var(--space-5) 0 0; color: var(--color-muted); font-size: clamp(var(--type-intro-size), 2vw, 1.1875rem); line-height: var(--line-height-relaxed); }
 
-.ds-card h2 { margin: 0; font-size: 1.25rem; }
-.ds-card p { margin: var(--space-3) 0 0; color: var(--color-muted); line-height: 1.7; }
+.ds-card h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); }
+.ds-card p { margin: var(--space-3) 0 0; color: var(--color-muted); line-height: var(--line-height-relaxed); }
 .route-placeholder { max-width: 42rem; padding-block: var(--space-8); }
-.route-placeholder h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
-.route-placeholder > p:not(.page-kicker) { color: var(--color-muted); line-height: 1.7; }
+.route-placeholder h1 { font-size: var(--type-product-heading-size); }
+.route-placeholder > p:not(.page-kicker) { color: var(--color-muted); line-height: var(--line-height-relaxed); }
 .route-placeholder .ds-notice { margin-top: var(--space-5); }
-.text-link { display: inline-flex; align-items: center; min-height: 2.75rem; margin-top: var(--space-5); color: var(--color-brand-strong); font-weight: 800; }
+.text-link { display: inline-flex; align-items: center; min-height: var(--control-min-height); margin-top: var(--space-5); color: var(--color-brand-strong); font-weight: 800; }
+.checkout-page__error, .orders-page__error { margin: var(--space-4) 0 0; color: var(--color-danger); font-weight: 700; }

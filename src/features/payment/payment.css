@@ -1,10 +1,10 @@
 .payment-status { border-left: 0.375rem solid var(--color-line); }
-.payment-status[data-tone="pending"] { border-left-color: #c78500; }
-.payment-status[data-tone="success"] { border-left-color: var(--color-brand); }
-.payment-status[data-tone="failure"] { border-left-color: #a52c2c; }
+.payment-status[data-tone="pending"] { border-left-color: var(--color-pending); }
+.payment-status[data-tone="success"] { border-left-color: var(--color-success); }
+.payment-status[data-tone="failure"] { border-left-color: var(--color-danger); }
 .payment-status[data-tone="unknown"] { border-left-color: var(--color-warning); }
-.payment-status h2 { margin: 0; font-size: 1.125rem; }
-.payment-status p { margin: var(--space-2) 0 0; color: var(--color-muted); line-height: 1.6; }
-.payment-status__eyebrow { color: var(--color-brand) !important; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; }
+.payment-status h2 { margin: 0; font-size: var(--font-size-md); line-height: var(--line-height-tight); }
+.payment-status p { margin: var(--space-2) 0 0; color: var(--color-muted); line-height: var(--line-height-body); }
+.payment-status__eyebrow { color: var(--color-brand) !important; font-size: var(--type-kicker-size); font-weight: 800; letter-spacing: var(--type-kicker-tracking); }
 .payment-status__reason { color: var(--color-ink) !important; }
-.payment-status__updated, .payment-status small { color: var(--color-muted); font-size: 0.875rem; }
+.payment-status__updated, .payment-status small { color: var(--color-muted); font-size: var(--font-size-sm); }
