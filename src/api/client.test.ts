@@ -64,7 +64,7 @@ describe('ApiClient', () => {
   });
 
   it.each([
-    [401, 'unauthorized'], [403, 'forbidden'], [409, 'conflict'], [422, 'validation'], [500, 'server'],
+    [400, 'badRequest'], [401, 'unauthorized'], [403, 'forbidden'], [404, 'notFound'], [409, 'conflict'], [422, 'validation'], [500, 'server'],
   ] as const)('request_responseStatus_throwsTypedError(%s, %s)', async (status, kind) => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(status, { message: 'safe error' })));
 

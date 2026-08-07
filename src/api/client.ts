@@ -1,4 +1,4 @@
-export type ApiErrorKind = 'unauthorized' | 'forbidden' | 'conflict' | 'validation' | 'server' | 'network';
+export type ApiErrorKind = 'badRequest' | 'unauthorized' | 'forbidden' | 'notFound' | 'conflict' | 'validation' | 'server' | 'network';
 
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
@@ -53,8 +53,10 @@ function asCsrfToken(payload: unknown): CsrfToken | undefined {
 }
 
 function errorKind(status: number): ApiErrorKind {
+  if (status === 400) return 'badRequest';
   if (status === 401) return 'unauthorized';
   if (status === 403) return 'forbidden';
+  if (status === 404) return 'notFound';
   if (status === 409) return 'conflict';
   if (status === 422) return 'validation';
   return 'server';

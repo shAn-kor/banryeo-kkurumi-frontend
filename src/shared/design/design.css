@@ -10,8 +10,10 @@
   --color-brand-soft: #e6f3e9;
   --color-sand: #fff8ee;
   --color-surface: #ffffff;
+  --color-surface-muted: #eef3ed;
   --color-page: #f6f8f2;
   --color-line: #d1ddd2;
+  --color-border: #d1ddd2;
   --color-focus: #075fbb;
   --color-warning: #7b5000;
   --color-warning-soft: #fff3d8;
@@ -21,6 +23,7 @@
   --space-4: 1rem;
   --space-5: 1.5rem;
   --space-6: 2rem;
+  --space-7: 2.5rem;
   --space-8: 3rem;
   --space-12: 4.5rem;
   --radius-sm: 0.5rem;
@@ -101,6 +104,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .site-navigation__link { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding-inline: var(--space-3); border-radius: var(--radius-sm); color: var(--color-muted); font-size: 0.9375rem; font-weight: 700; text-decoration: none; }
 .site-navigation__link:hover, .site-navigation__link.is-active { color: var(--color-brand-strong); background: var(--color-brand-soft); }
 .site-header__auth { color: #fff; background: var(--color-brand); }
+.site-header__account, .site-header__auth-actions { display: flex; align-items: center; gap: var(--space-2); }
+.site-header__member, .site-header__session-status { color: var(--color-muted); font-size: 0.875rem; font-weight: 700; }
+.site-header__signup { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding-inline: var(--space-2); color: var(--color-brand-strong); font-size: 0.9375rem; font-weight: 800; text-decoration: none; }
+.site-header__logout-error { width: 100%; margin: 0; color: #8b1e1e; font-size: 0.875rem; font-weight: 700; }
 
 .site-footer { border-top: 1px solid var(--color-line); background: var(--color-sand); }
 .site-footer__content { padding-block: var(--space-5); color: var(--color-muted); }
@@ -112,7 +119,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   .site-header__content { min-height: auto; flex-wrap: wrap; padding-block: var(--space-3); }
   .site-navigation { order: 3; width: 100%; justify-content: space-between; margin-left: 0; }
   .site-navigation__link { flex: 1 1 0; }
-  .site-header__auth { margin-left: auto; }
+  .site-header__account { margin-left: auto; }
+  .site-header__member { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
