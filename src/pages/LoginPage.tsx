@@ -6,8 +6,26 @@ import { Button, Card, Container, Notice, Page, Section, TextInput } from '../sh
 import { ErrorState } from '../shared/states';
 import './storefront-pages.css';
 
-function safeReturnTo(value: string | null): string {
-  return value && value.startsWith('/') && !value.startsWith('//') ? value : '/';
+function containsUnsafePathCharacter(value: string): boolean {
+  let decoded = value;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    if (decoded.includes('\\') || /[\u0000-\u001F\u007F]/.test(decoded)) return true;
+    try {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) return false;
+      decoded = next;
+    } catch { return true; }
+  }
+  return decoded.includes('\\') || /[\u0000-\u001F\u007F]/.test(decoded);
+}
+
+export function safeReturnTo(value: string | null): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//') || containsUnsafePathCharacter(value)) return '/';
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin || !url.pathname.startsWith('/') || url.pathname.startsWith('//')) return '/';
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch { return '/'; }
 }
 
 export default function LoginPage() {
