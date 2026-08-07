@@ -18,8 +18,12 @@ const DESKTOP_MEMBER = {
   phone: '010-1000-0002',
 };
 
-async function registerAndLogin(page: Page, member: typeof MOBILE_MEMBER): Promise<void> {
-  await page.goto('/signup');
+// `src/app/main.tsx` wraps the dev-server entry in StrictMode, so React runs
+// the initial SessionProvider effect twice. A third probe is always a defect.
+const EXPECTED_INITIAL_SESSION_PROBES = 2;
+
+async function registerAndLogin(page: Page, member: typeof MOBILE_MEMBER, startsOnSignup = false): Promise<void> {
+  if (!startsOnSignup) await page.goto('/signup');
   await page.getByLabel('아이디').fill(member.loginId);
   await page.getByLabel('비밀번호').fill(member.password);
   await page.getByLabel('이름').fill(member.name);
@@ -53,6 +57,7 @@ type BrowserDiagnostics = {
   pageErrors: string[];
   requestFailures: string[];
   expectedAnonymousSessionProbes: string[];
+  anonymousSessionProbeConsoleMessages: string[];
   expectedPostResponseNavigationFailures: string[];
   unexpectedUnauthorizedResponses: string[];
 };
@@ -63,10 +68,10 @@ function observeBrowser(page: Page): BrowserDiagnostics {
     pageErrors: [],
     requestFailures: [],
     expectedAnonymousSessionProbes: [],
+    anonymousSessionProbeConsoleMessages: [],
     expectedPostResponseNavigationFailures: [],
     unexpectedUnauthorizedResponses: [],
   };
-  let consumedAnonymousSessionProbeMessages = 0;
   const completedLogoutRequests = new Set<Request>();
   page.on('response', (response) => {
     const request = response.request();
@@ -75,7 +80,8 @@ function observeBrowser(page: Page): BrowserDiagnostics {
       completedLogoutRequests.add(request);
     }
     if (response.status() !== 401) return;
-    if (request.method() === 'GET' && path === '/api/v1/members/me') {
+    if (request.method() === 'GET' && path === '/api/v1/members/me'
+      && diagnostics.expectedAnonymousSessionProbes.length < EXPECTED_INITIAL_SESSION_PROBES) {
       diagnostics.expectedAnonymousSessionProbes.push(`${request.method()} ${path}`);
       return;
     }
@@ -83,12 +89,10 @@ function observeBrowser(page: Page): BrowserDiagnostics {
   });
   page.on('console', (message) => {
     if (message.type() !== 'error') return;
-    // Chromium reports the contractually expected anonymous session probe as a
-    // console error. Consume only its exact message after its exact 401 API
-    // response was observed; every other browser console error remains fatal.
-    if (message.text() === 'Failed to load resource: the server responded with a status of 401 ()'
-      && consumedAnonymousSessionProbeMessages < diagnostics.expectedAnonymousSessionProbes.length) {
-      consumedAnonymousSessionProbeMessages += 1;
+    // Chromium can report this console message before its matching response
+    // event. Pair it with the sole allowed anonymous session response below.
+    if (message.text() === 'Failed to load resource: the server responded with a status of 401 ()') {
+      diagnostics.anonymousSessionProbeConsoleMessages.push(message.text());
       return;
     }
     diagnostics.consoleErrors.push(message.text());
@@ -96,7 +100,6 @@ function observeBrowser(page: Page): BrowserDiagnostics {
   page.on('pageerror', (error) => diagnostics.pageErrors.push(error.message));
   page.on('requestfailed', (request) => {
     const errorText = request.failure()?.errorText ?? 'unknown request failure';
-    if (request.isNavigationRequest() && errorText === 'net::ERR_ABORTED') return;
     if (completedLogoutRequests.has(request) && errorText === 'net::ERR_ABORTED') {
       diagnostics.expectedPostResponseNavigationFailures.push(`${request.method()} ${new URL(request.url()).pathname} :: ${errorText}`);
       return;
@@ -111,6 +114,8 @@ function expectNoBrowserErrors(diagnostics: BrowserDiagnostics): void {
   expect(diagnostics.pageErrors, 'browser page errors').toEqual([]);
   expect(diagnostics.requestFailures, 'unexpected browser request failures').toEqual([]);
   expect(diagnostics.unexpectedUnauthorizedResponses, 'unexpected unauthorized API responses').toEqual([]);
+  expect(diagnostics.expectedAnonymousSessionProbes, 'StrictMode initial anonymous session probes').toHaveLength(EXPECTED_INITIAL_SESSION_PROBES);
+  expect(diagnostics.anonymousSessionProbeConsoleMessages, 'StrictMode initial anonymous session probe console messages').toHaveLength(EXPECTED_INITIAL_SESSION_PROBES);
   expect(diagnostics.expectedPostResponseNavigationFailures.length, 'at most one completed logout navigation abort').toBeLessThanOrEqual(1);
 }
 
@@ -172,7 +177,7 @@ test.describe('Q3 실제 public runtime storefront', () => {
     await page.keyboard.press('Enter');
     await expect(page.getByRole('main')).toBeFocused();
 
-    await registerAndLogin(page, MOBILE_MEMBER);
+    await registerAndLogin(page, MOBILE_MEMBER, true);
     await page.goto('/products');
     await expect(page.getByRole('heading', { name: '상품 목록' })).toBeVisible();
     await page.getByRole('combobox', { name: '브랜드' }).selectOption({ label: 'E2E-Pet-Brand' });
