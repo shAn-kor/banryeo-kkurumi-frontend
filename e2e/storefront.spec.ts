@@ -58,6 +58,8 @@ type BrowserDiagnostics = {
   requestFailures: string[];
   expectedAnonymousSessionProbes: string[];
   anonymousSessionProbeConsoleMessages: string[];
+  expectedPendingPaymentResponses: string[];
+  pendingPaymentConsoleMessages: string[];
   expectedPostResponseNavigationFailures: string[];
   unexpectedUnauthorizedResponses: string[];
 };
@@ -69,6 +71,8 @@ function observeBrowser(page: Page): BrowserDiagnostics {
     requestFailures: [],
     expectedAnonymousSessionProbes: [],
     anonymousSessionProbeConsoleMessages: [],
+    expectedPendingPaymentResponses: [],
+    pendingPaymentConsoleMessages: [],
     expectedPostResponseNavigationFailures: [],
     unexpectedUnauthorizedResponses: [],
   };
@@ -78,6 +82,10 @@ function observeBrowser(page: Page): BrowserDiagnostics {
     const path = new URL(response.url()).pathname;
     if (response.status() === 204 && request.method() === 'POST' && path === '/api/v1/auth/logout') {
       completedLogoutRequests.add(request);
+    }
+    if (response.status() === 404 && request.method() === 'GET' && path === '/api/v1/payments') {
+      diagnostics.expectedPendingPaymentResponses.push(`${request.method()} ${path}`);
+      return;
     }
     if (response.status() !== 401) return;
     if (request.method() === 'GET' && path === '/api/v1/members/me'
@@ -93,6 +101,10 @@ function observeBrowser(page: Page): BrowserDiagnostics {
     // event. Pair it with the sole allowed anonymous session response below.
     if (message.text() === 'Failed to load resource: the server responded with a status of 401 ()') {
       diagnostics.anonymousSessionProbeConsoleMessages.push(message.text());
+      return;
+    }
+    if (message.text() === 'Failed to load resource: the server responded with a status of 404 ()') {
+      diagnostics.pendingPaymentConsoleMessages.push(message.text());
       return;
     }
     diagnostics.consoleErrors.push(message.text());
@@ -116,6 +128,8 @@ function expectNoBrowserErrors(diagnostics: BrowserDiagnostics): void {
   expect(diagnostics.unexpectedUnauthorizedResponses, 'unexpected unauthorized API responses').toEqual([]);
   expect(diagnostics.expectedAnonymousSessionProbes, 'StrictMode initial anonymous session probes').toHaveLength(EXPECTED_INITIAL_SESSION_PROBES);
   expect(diagnostics.anonymousSessionProbeConsoleMessages, 'StrictMode initial anonymous session probe console messages').toHaveLength(EXPECTED_INITIAL_SESSION_PROBES);
+  expect(diagnostics.pendingPaymentConsoleMessages.length, 'pending payment console messages must match 404 payment responses')
+    .toBe(diagnostics.expectedPendingPaymentResponses.length);
   expect(diagnostics.expectedPostResponseNavigationFailures.length, 'at most one completed logout navigation abort').toBeLessThanOrEqual(1);
 }
 

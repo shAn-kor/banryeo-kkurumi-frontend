@@ -4,8 +4,7 @@ set -euo pipefail
 
 readonly PROJECT_PREFIX="banryeo-q3-"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly REPOSITORY_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-readonly COMPOSE_FILE="${REPOSITORY_ROOT}/compose.public.yml"
+readonly FRONTEND_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 usage() {
   cat <<'USAGE'
@@ -16,6 +15,8 @@ Usage:
 
 run-id must contain only lowercase letters, digits, and single hyphens between
 alphanumeric segments. The Compose project is always derived as banryeo-q3-<run-id>.
+BANRYEO_BACKEND_ROOT may point to either the banryeo-kkurumi project root or
+its backend directory.
 USAGE
 }
 
@@ -23,6 +24,26 @@ fail() {
   echo "q3-runtime: $*" >&2
   exit 2
 }
+
+resolve_backend_root() {
+  local default_project_root
+  local candidate
+  default_project_root="$(cd "${FRONTEND_ROOT}/../.." && pwd)/banryeo-kkurumi"
+  candidate="${BANRYEO_BACKEND_ROOT:-${default_project_root}}"
+
+  if [[ -f "${candidate}/compose.public.yml" ]]; then
+    (cd "${candidate}" && pwd)
+    return
+  fi
+  if [[ -f "${candidate}/backend/compose.public.yml" ]]; then
+    (cd "${candidate}/backend" && pwd)
+    return
+  fi
+  fail "backend compose file is missing under ${candidate}"
+}
+
+readonly BACKEND_ROOT="$(resolve_backend_root)"
+readonly COMPOSE_FILE="${BACKEND_ROOT}/compose.public.yml"
 
 validate_run_id() {
   local run_id="$1"

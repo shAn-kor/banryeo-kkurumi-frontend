@@ -5,8 +5,6 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly STOREFRONT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-readonly REPOSITORY_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-readonly COMPOSE_FILE="${REPOSITORY_ROOT}/compose.public.yml"
 readonly FIXTURE_SQL="${STOREFRONT_ROOT}/e2e/fixtures/public-catalog.sql"
 readonly Q3_RUNTIME="${Q3_RUNTIME:-${SCRIPT_DIR}/q3-runtime.sh}"
 readonly PROJECT_PREFIX="banryeo-q3-"
@@ -22,6 +20,8 @@ Usage:
 
 Only run ids beginning with e2e- are accepted. `run` tears down the exact
 derived Compose project and its volumes before setup, then always tears it down.
+BANRYEO_BACKEND_ROOT may point to either the banryeo-kkurumi project root or
+its backend directory.
 USAGE
 }
 
@@ -29,6 +29,28 @@ fail() {
   echo "e2e-public-runtime: $*" >&2
   exit 2
 }
+
+resolve_backend_root() {
+  local frontend_root
+  local default_project_root
+  local candidate
+  frontend_root="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+  default_project_root="$(cd "${frontend_root}/../.." && pwd)/banryeo-kkurumi"
+  candidate="${BANRYEO_BACKEND_ROOT:-${default_project_root}}"
+
+  if [[ -f "${candidate}/compose.public.yml" ]]; then
+    (cd "${candidate}" && pwd)
+    return
+  fi
+  if [[ -f "${candidate}/backend/compose.public.yml" ]]; then
+    (cd "${candidate}/backend" && pwd)
+    return
+  fi
+  fail "backend compose file is missing under ${candidate}"
+}
+
+readonly BACKEND_ROOT="$(resolve_backend_root)"
+readonly COMPOSE_FILE="${BACKEND_ROOT}/compose.public.yml"
 
 validate_run_id() {
   local run_id="$1"

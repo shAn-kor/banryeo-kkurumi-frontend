@@ -6,6 +6,12 @@ set -euo pipefail
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly RUNTIME="${SCRIPT_DIR}/q3-runtime.sh"
 readonly REPOSITORY_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+readonly DEFAULT_PROJECT_ROOT="$(cd "${REPOSITORY_ROOT}/../.." && pwd)/banryeo-kkurumi"
+if [[ -f "${DEFAULT_PROJECT_ROOT}/compose.public.yml" ]]; then
+  readonly DEFAULT_BACKEND_ROOT="${DEFAULT_PROJECT_ROOT}"
+else
+  readonly DEFAULT_BACKEND_ROOT="${DEFAULT_PROJECT_ROOT}/backend"
+fi
 readonly TEST_TMP="$(mktemp -d)"
 trap 'rm -rf "${TEST_TMP}"' EXIT
 
@@ -52,7 +58,7 @@ STUB
 
   PATH="${stub_bin}:${PATH}" DOCKER_CAPTURE="${capture}" "${RUNTIME}" up alpha-1 18081
   assert_arguments "${capture}" \
-    compose -p banryeo-q3-alpha-1 -f "${REPOSITORY_ROOT}/compose.public.yml" \
+    compose -p banryeo-q3-alpha-1 -f "${DEFAULT_BACKEND_ROOT}/compose.public.yml" \
     up --build --detach --wait
 }
 
@@ -65,10 +71,9 @@ main() {
   render "${first}" 18081
   render "${second}" 18082
 
-  assert_contains "${first_render}" 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql'
-  assert_contains "${first_render}" "--protocol=TCP"
-  assert_contains "${first_render}" "--host=127.0.0.1"
-  assert_contains "${first_render}" "SELECT 1 FROM members LIMIT 1"
+  assert_contains "${first_render}" "mysqladmin"
+  assert_contains "${first_render}" "-uapplication"
+  assert_contains "${first_render}" "${DEFAULT_BACKEND_ROOT}/docker/mysql/init/01-schema.sql"
 
   for resource in "${PROJECT_PREFIX:-banryeo-q3-}${first}_public-mysql-data" "${PROJECT_PREFIX:-banryeo-q3-}${first}_public-redis-data" "${PROJECT_PREFIX:-banryeo-q3-}${first}_default"; do
     assert_contains "${first_render}" "${resource}"
