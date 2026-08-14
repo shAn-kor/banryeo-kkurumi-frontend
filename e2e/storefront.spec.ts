@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Request, type TestInfo } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Request, type TestInfo } from '@playwright/test';
 
 const MOBILE_MEMBER = {
   loginId: 'e2emobile1',
@@ -151,26 +151,30 @@ async function attachScreenshot(page: Page, testInfo: TestInfo, name: string): P
   await testInfo.attach(name, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
 }
 
+type ElementPosition = { left: number; top: number };
+
+async function measurePositions(locator: Locator, expectedCount: number, label: string): Promise<ElementPosition[]> {
+  let positions: ElementPosition[] = [];
+  await expect(async () => {
+    positions = await locator.evaluateAll((elements) => elements.map((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, top: rect.top };
+    }));
+    expect(positions, label).toHaveLength(expectedCount);
+  }).toPass({ timeout: 10_000 });
+  return positions;
+}
+
 async function expectStackedLayout(page: Page, containerSelector: string, childSelector: string, label: string): Promise<void> {
   const children = page.locator(containerSelector).locator(childSelector);
-  await expect(children, `${label}: two rendered sections`).toHaveCount(2);
-  const boxes = await children.evaluateAll((elements) => elements.map((element) => {
-    const rect = element.getBoundingClientRect();
-    return { left: rect.left, top: rect.top };
-  }));
-  expect(boxes, `${label}: expected two sections`).toHaveLength(2);
+  const boxes = await measurePositions(children, 2, `${label}: two rendered sections`);
   expect(boxes[1].top, `${label}: second section below first`).toBeGreaterThan(boxes[0].top);
   expect(Math.abs(boxes[1].left - boxes[0].left), `${label}: shared left edge`).toBeLessThanOrEqual(1);
 }
 
 async function expectDesktopColumns(page: Page, containerSelector: string, childSelector: string, label: string): Promise<void> {
   const children = page.locator(containerSelector).locator(childSelector);
-  await expect(children, `${label}: two rendered sections`).toHaveCount(2);
-  const boxes = await children.evaluateAll((elements) => elements.map((element) => {
-    const rect = element.getBoundingClientRect();
-    return { left: rect.left, top: rect.top };
-  }));
-  expect(boxes, `${label}: expected two sections`).toHaveLength(2);
+  const boxes = await measurePositions(children, 2, `${label}: two rendered sections`);
   expect(boxes[1].left, `${label}: second section right of first`).toBeGreaterThan(boxes[0].left);
   expect(Math.abs(boxes[1].top - boxes[0].top), `${label}: aligned top edge`).toBeLessThanOrEqual(1);
 }
@@ -205,14 +209,10 @@ test.describe('Q3 실제 public runtime storefront', () => {
     await expectWithinViewport(page, '.product-card', 'mobile catalog card');
     const mobileHeader = await page.locator('.site-header__content').evaluate((element) => getComputedStyle(element).flexWrap);
     const mobileNavigation = await page.locator('.site-navigation').evaluate((element) => ({ order: getComputedStyle(element).order, width: element.getBoundingClientRect().width, parentWidth: element.parentElement?.getBoundingClientRect().width ?? 0 }));
-    const mobileCards = await page.locator('.product-card').evaluateAll((elements) => elements.map((element) => {
-      const rect = element.getBoundingClientRect();
-      return { left: rect.left, top: rect.top };
-    }));
+    const mobileCards = await measurePositions(page.locator('.product-card'), 2, 'mobile catalog cards');
     expect(mobileHeader, 'mobile header wrapping').toBe('wrap');
     expect(mobileNavigation.order, 'mobile navigation order').toBe('3');
     expect(mobileNavigation.width, 'mobile navigation full row').toBeGreaterThanOrEqual(mobileNavigation.parentWidth - 1);
-    expect(mobileCards, 'mobile catalog cards').toHaveLength(2);
     expect(mobileCards[1].top, 'mobile cards stack').toBeGreaterThan(mobileCards[0].top);
     expect(Math.abs(mobileCards[1].left - mobileCards[0].left), 'mobile card alignment').toBeLessThanOrEqual(1);
     await page.getByRole('link', { name: 'E2E Salmon Food', exact: true }).click();
@@ -231,11 +231,7 @@ test.describe('Q3 실제 public runtime storefront', () => {
     await page.goto('/products');
     await expect(page.getByRole('link', { name: 'E2E Salmon Food', exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page, 'desktop catalog');
-    const desktopCards = await page.locator('.product-card').evaluateAll((elements) => elements.map((element) => {
-      const rect = element.getBoundingClientRect();
-      return { left: rect.left, top: rect.top };
-    }));
-    expect(desktopCards, 'desktop catalog cards').toHaveLength(2);
+    const desktopCards = await measurePositions(page.locator('.product-card'), 2, 'desktop catalog cards');
     expect(desktopCards[1].left, 'desktop catalog multi-column grid').toBeGreaterThan(desktopCards[0].left);
     await page.getByRole('link', { name: 'E2E Salmon Food', exact: true }).click();
     const likeButton = page.getByRole('button', { name: '좋아요', exact: true });

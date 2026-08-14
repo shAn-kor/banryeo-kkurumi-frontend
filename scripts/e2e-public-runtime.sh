@@ -31,11 +31,9 @@ fail() {
 }
 
 resolve_backend_root() {
-  local frontend_root
   local default_project_root
   local candidate
-  frontend_root="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-  default_project_root="$(cd "${frontend_root}/../.." && pwd)/banryeo-kkurumi"
+  default_project_root="$(cd "${STOREFRONT_ROOT}/.." && pwd)/banryeo-kkurumi"
   candidate="${BANRYEO_BACKEND_ROOT:-${default_project_root}}"
 
   if [[ -f "${candidate}/compose.public.yml" ]]; then

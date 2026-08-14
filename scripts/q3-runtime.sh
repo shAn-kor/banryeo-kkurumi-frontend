@@ -4,7 +4,7 @@ set -euo pipefail
 
 readonly PROJECT_PREFIX="banryeo-q3-"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly FRONTEND_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+readonly FRONTEND_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 usage() {
   cat <<'USAGE'
@@ -28,7 +28,7 @@ fail() {
 resolve_backend_root() {
   local default_project_root
   local candidate
-  default_project_root="$(cd "${FRONTEND_ROOT}/../.." && pwd)/banryeo-kkurumi"
+  default_project_root="$(cd "${FRONTEND_ROOT}/.." && pwd)/banryeo-kkurumi"
   candidate="${BANRYEO_BACKEND_ROOT:-${default_project_root}}"
 
   if [[ -f "${candidate}/compose.public.yml" ]]; then

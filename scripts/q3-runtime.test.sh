@@ -5,8 +5,8 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly RUNTIME="${SCRIPT_DIR}/q3-runtime.sh"
-readonly REPOSITORY_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-readonly DEFAULT_PROJECT_ROOT="$(cd "${REPOSITORY_ROOT}/../.." && pwd)/banryeo-kkurumi"
+readonly REPOSITORY_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+readonly DEFAULT_PROJECT_ROOT="${BANRYEO_BACKEND_ROOT:-$(cd "${REPOSITORY_ROOT}/.." && pwd)/banryeo-kkurumi}"
 if [[ -f "${DEFAULT_PROJECT_ROOT}/compose.public.yml" ]]; then
   readonly DEFAULT_BACKEND_ROOT="${DEFAULT_PROJECT_ROOT}"
 else
